@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSS image-set()</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-0: #07080d;
+    --bg-1: #0d1020;
+    --gold-1: #f5d58a;
+    --gold-2: #d4a64a;
+    --gold-3: #a8781f;
+    --violet: #7c6cff;
+    --teal: #3dd6c6;
+    --rose: #ff7a9c;
+    --text: #eef0f7;
+    --muted: #9aa1b8;
+    --line: rgba(255,255,255,0.08);
+    --glass: rgba(255,255,255,0.035);
+    --code-bg: rgba(6,8,16,0.75);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    background: var(--bg-0);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- Premium background ---------- */
+  .bg {
+    position: fixed; inset: 0; z-index: 0; overflow: hidden;
+    background:
+      radial-gradient(1200px 700px at 85% -10%, rgba(124,108,255,0.18), transparent 60%),
+      radial-gradient(900px 600px at -10% 110%, rgba(212,166,74,0.16), transparent 60%),
+      radial-gradient(700px 500px at 50% 50%, rgba(61,214,198,0.05), transparent 70%),
+      linear-gradient(160deg, var(--bg-1), var(--bg-0) 60%);
+  }
+  .orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .45; animation: float 22s ease-in-out infinite; }
+  .orb.a { width: 520px; height: 520px; background: #4b3cc9; top: -180px; right: -120px; }
+  .orb.b { width: 460px; height: 460px; background: #8a5f12; bottom: -200px; left: -140px; animation-delay: -7s; }
+  .orb.c { width: 300px; height: 300px; background: #136e66; top: 40%; left: 55%; opacity: .22; animation-delay: -13s; }
+  @keyframes float { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(40px,-30px) scale(1.08); } }
+  .grid-lines {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at center, #000 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 80%);
+  }
+  .grain {
+    position: absolute; inset: -50%; opacity: .05; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- Stage (16:9, scaled to fit) ---------- */
+  .viewport { position: fixed; inset: 0; z-index: 1; display: grid; place-items: center; }
+  .stage { width: 1280px; height: 720px; position: relative; transform-origin: center center; }
+  .track {
+    display: flex; height: 100%;
+    transition: transform .8s cubic-bezier(.77,0,.18,1);
+  }
+  .slide {
+    flex: 0 0 1280px; height: 720px;
+    padding: 64px 80px 80px;
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+  .slide > * { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
+  .slide.active > * { opacity: 1; transform: none; }
+  .slide.active > *:nth-child(2) { transition-delay: .12s; }
+  .slide.active > *:nth-child(3) { transition-delay: .22s; }
+  .slide.active > *:nth-child(4) { transition-delay: .32s; }
+  .slide.active > *:nth-child(5) { transition-delay: .42s; }
+
+  /* ---------- Typography ---------- */
+  .eyebrow {
+    font: 600 13px/1 'Inter'; letter-spacing: .28em; text-transform: uppercase;
+    color: var(--gold-2); display: flex; align-items: center; gap: 14px; margin-bottom: 18px;
+  }
+  .eyebrow::before { content: ""; width: 36px; height: 1px; background: linear-gradient(90deg, var(--gold-2), transparent); }
+  h1, h2 { font-family: 'Playfair Display', serif; font-weight: 700; letter-spacing: -.01em; }
+  h2 { font-size: 46px; line-height: 1.1; margin-bottom: 28px; }
+  .gold {
+    background: linear-gradient(120deg, var(--gold-1), var(--gold-2) 50%, #fff3cf);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  p.lead { font-size: 20px; line-height: 1.6; color: var(--muted); max-width: 900px; }
+  code.inline {
+    font-family: 'JetBrains Mono', monospace; font-size: .88em;
+    background: rgba(245,213,138,0.08); color: var(--gold-1);
+    padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(245,213,138,0.15);
+  }
+
+  /* ---------- Components ---------- */
+  .card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+    border: 1px solid var(--line);
+    border-radius: 18px; padding: 26px 28px;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .card h3 { font-size: 19px; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+  .card p { color: var(--muted); font-size: 15.5px; line-height: 1.6; }
+  .icon {
+    width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; flex: none;
+    background: linear-gradient(135deg, rgba(245,213,138,.22), rgba(245,213,138,.04));
+    border: 1px solid rgba(245,213,138,.25); color: var(--gold-1); font-size: 18px;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .split { display: grid; grid-template-columns: 1.15fr .85fr; gap: 28px; align-items: stretch; flex: 1; min-height: 0; }
+
+  pre.code {
+    font-family: 'JetBrains Mono', monospace; font-size: 15.5px; line-height: 1.7;
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 16px;
+    padding: 46px 26px 22px; position: relative; overflow: hidden; white-space: pre;
+    box-shadow: 0 30px 60px -30px rgba(0,0,0,.8);
+  }
+  .syntax-slide h2 { margin-bottom: 18px; }
+  .syntax-slide pre.code { flex-shrink: 0; font-size: 14px; line-height: 1.6; padding: 40px 24px 14px; }
+  .syntax-slide .card { padding: 18px 22px; }
+  .syntax-slide .card p { font-size: 14.5px; line-height: 1.5; }
+  pre.code::before {
+    content: ""; position: absolute; top: 16px; left: 20px; width: 10px; height: 10px; border-radius: 50%;
+    background: #ff5f57; box-shadow: 16px 0 0 #febc2e, 32px 0 0 #28c840;
+  }
+  pre.code[data-label]::after {
+    content: attr(data-label); position: absolute; top: 12px; right: 18px;
+    font: 500 11px 'Inter'; letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+  }
+  .c-sel { color: #ffcb6b; }
+  .c-prop { color: #82aaff; }
+  .c-fn { color: #c792ea; }
+  .c-str { color: #c3e88d; }
+  .c-num { color: #f78c6c; }
+  .c-com { color: #5c6585; font-style: italic; }
+  .c-pun { color: #89ddff; }
+
+  .demo {
+    border-radius: 16px; border: 1px solid var(--line); overflow: hidden;
+    display: flex; flex-direction: column; background: rgba(255,255,255,0.02);
+  }
+  .demo-head {
+    padding: 12px 18px; font: 600 12px 'Inter'; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--teal); border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px;
+  }
+  .demo-head::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 10px var(--teal); animation: pulse 2s infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
+  .demo-box { flex: 1; background-size: cover; background-position: center; min-height: 200px; }
+  .demo-foot { padding: 12px 18px; font-size: 13.5px; color: var(--muted); border-top: 1px solid var(--line); }
+  .demo-foot b { color: var(--gold-1); font-family: 'JetBrains Mono', monospace; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--glass); font-size: 13.5px; color: var(--muted);
+  }
+  .pill b { color: var(--text); font-weight: 600; }
+
+  table.t { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 16px; }
+  table.t th, table.t td { padding: 15px 20px; text-align: left; border-bottom: 1px solid var(--line); }
+  table.t th { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--gold-2); font-weight: 600; }
+  table.t td:first-child { font-family: 'JetBrains Mono', monospace; color: var(--gold-1); }
+  table.t td { color: #c9cde0; }
+  table.t tr:last-child td { border-bottom: 0; }
+
+  ul.ticks { list-style: none; display: grid; gap: 14px; }
+  ul.ticks li { padding-left: 34px; position: relative; font-size: 17px; line-height: 1.55; color: #cfd3e4; }
+  ul.ticks li::before {
+    content: "✓"; position: absolute; left: 0; top: 1px; width: 22px; height: 22px; border-radius: 6px;
+    display: grid; place-items: center; font-size: 12px; font-weight: 700; color: var(--bg-0);
+    background: linear-gradient(135deg, var(--gold-1), var(--gold-2));
+  }
+
+  /* ---------- Title slide ---------- */
+  .title-slide { justify-content: center; }
+  .title-slide h1 { font-size: 104px; line-height: 1; margin: 6px 0 26px; font-weight: 800; }
+  .title-slide h1 .fn { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: .78em; }
+  .title-slide .sub { font-size: 24px; color: var(--muted); max-width: 760px; line-height: 1.5; font-weight: 300; }
+  .title-meta { display: flex; gap: 12px; margin-top: 44px; }
+  .ring {
+    position: absolute; right: 70px; top: 50%; width: 360px; height: 360px; margin-top: -180px;
+    border-radius: 50%; border: 1px solid rgba(245,213,138,.2);
+    display: grid; place-items: center;
+  }
+  .ring::before, .ring::after { content: ""; position: absolute; border-radius: 50%; border: 1px dashed rgba(245,213,138,.15); }
+  .ring::before { inset: 40px; animation: spin 40s linear infinite; }
+  .ring::after { inset: -40px; border-style: solid; border-color: rgba(124,108,255,.12); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .ring .res { display: flex; gap: 14px; }
+  .ring .res span {
+    font: 700 22px 'JetBrains Mono'; padding: 16px 14px; border-radius: 14px;
+    border: 1px solid var(--line); background: rgba(255,255,255,.04);
+  }
+  .ring .res span:nth-child(2) { color: var(--gold-1); border-color: rgba(245,213,138,.35); box-shadow: 0 0 40px rgba(245,213,138,.2); }
+
+  /* ---------- Chrome: nav / progress ---------- */
+  .progress { position: fixed; left: 0; top: 0; height: 3px; z-index: 5; background: linear-gradient(90deg, var(--gold-3), var(--gold-1)); transition: width .6s ease; box-shadow: 0 0 14px rgba(245,213,138,.5); }
+  .nav { position: fixed; bottom: 22px; right: 28px; z-index: 5; display: flex; align-items: center; gap: 10px; }
+  .nav button {
+    width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); cursor: pointer;
+    background: rgba(255,255,255,.05); color: var(--text); font-size: 18px;
+    backdrop-filter: blur(10px); transition: all .2s;
+  }
+  .nav button:hover { background: rgba(245,213,138,.15); border-color: rgba(245,213,138,.4); color: var(--gold-1); }
+  .counter { font: 500 13px 'JetBrains Mono'; color: var(--muted); min-width: 64px; text-align: center; }
+  .counter b { color: var(--gold-1); }
+  .brand { position: fixed; bottom: 32px; left: 30px; z-index: 5; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: #5f6680; }
+  .dots { position: fixed; bottom: 38px; left: 50%; transform: translateX(-50%); z-index: 5; display: flex; gap: 8px; }
+  .dots i { width: 7px; height: 7px; border-radius: 99px; background: rgba(255,255,255,.18); cursor: pointer; transition: all .3s; }
+  .dots i.on { width: 26px; background: var(--gold-2); }
+
+  .note { margin-top: auto; padding-top: 18px; font-size: 14px; color: #6d7490; }
+  .callout {
+    border-left: 3px solid var(--gold-2); background: rgba(245,213,138,.06);
+    padding: 16px 20px; border-radius: 0 12px 12px 0; font-size: 15.5px; color: #d6d9e8; line-height: 1.6;
+  }
+  .callout b { color: var(--gold-1); }
+
+  @media (max-width: 700px) { .brand, .dots { display: none; } .nav { right: 12px; bottom: 12px; } }
+</style>
+</head>
+<body>
+
+<div class="bg"><div class="orb a"></div><div class="orb b"></div><div class="orb c"></div><div class="grid-lines"></div><div class="grain"></div></div>
+<div class="progress" id="progress"></div>
+
+<div class="viewport">
+  <div class="stage" id="stage">
+    <div class="track" id="track">
+
+      <!-- 1. Title -->
+      <section class="slide title-slide">
+        <div class="eyebrow">CSS Images Module · Level 4</div>
+        <h1><span class="gold fn">image-set()</span></h1>
+        <p class="sub">Let the browser pick the <em>right</em> image — the best resolution and the best format — for every screen, automatically.</p>
+        <div class="title-meta">
+          <span class="pill">⚡ <b>Responsive images</b> in pure CSS</span>
+          <span class="pill">🌐 <b>Baseline 2023</b></span>
+        </div>
+        <div class="ring"><div class="res"><span>1x</span><span>2x</span><span>3x</span></div></div>
+      </section>
+
+      <!-- 2. What is it -->
+      <section class="slide">
+        <div class="eyebrow">Overview</div>
+        <h2>What is <span class="gold">image-set()</span>?</h2>
+        <p class="lead">A CSS functional notation that provides a <b style="color:var(--text)">set of image options</b>. The browser chooses the most appropriate one based on the device's <b style="color:var(--text)">pixel density</b> and which <b style="color:var(--text)">image formats</b> it supports.</p>
+        <div class="grid-3" style="margin-top:40px">
+          <div class="card"><h3><span class="icon">◎</span>Resolution aware</h3><p>Serve sharp 2x / 3x assets to Retina &amp; high-DPI screens, and lighter 1x files everywhere else.</p></div>
+          <div class="card"><h3><span class="icon">❖</span>Format aware</h3><p>Offer modern formats like AVIF or WebP with <code class="inline">type()</code>, falling back to JPEG / PNG.</p></div>
+          <div class="card"><h3><span class="icon">✦</span>Works anywhere</h3><p>Usable wherever an <code class="inline">&lt;image&gt;</code> is accepted — <code class="inline">background-image</code>, <code class="inline">content</code>, <code class="inline">mask-image</code>…</p></div>
+        </div>
+      </section>
+
+      <!-- 3. Problem -->
+      <section class="slide">
+        <div class="eyebrow">Why it matters</div>
+        <h2>One image doesn't fit <span class="gold">every screen</span></h2>
+        <div class="grid-2" style="margin-top:8px">
+          <div class="card">
+            <h3><span class="icon" style="color:var(--rose);border-color:rgba(255,122,156,.3);background:rgba(255,122,156,.08)">✕</span>Without image-set()</h3>
+            <ul class="ticks" style="margin-top:16px">
+              <li style="--x:1">Low-res image looks <b>blurry</b> on Retina displays</li>
+              <li>High-res image <b>wastes bandwidth</b> on standard screens</li>
+              <li>No way to prefer <b>AVIF / WebP</b> in plain CSS backgrounds</li>
+              <li>Media-query hacks with <code class="inline">min-resolution</code> get verbose</li>
+            </ul>
+          </div>
+          <div class="card" style="border-color:rgba(245,213,138,.25)">
+            <h3><span class="icon">✓</span>With image-set()</h3>
+            <ul class="ticks" style="margin-top:16px">
+              <li>Browser picks the <b>sharpest suitable</b> image</li>
+              <li>Smaller downloads on <b>low-density</b> devices</li>
+              <li>Modern formats with <b>automatic fallback</b></li>
+              <li>One declaration — <b>clean &amp; declarative</b></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Syntax -->
+      <section class="slide syntax-slide">
+        <div class="eyebrow">Syntax</div>
+        <h2>Anatomy of <span class="gold">image-set()</span></h2>
+        <pre class="code" data-label="Formal syntax"><span class="c-fn">image-set</span><span class="c-pun">(</span> <span class="c-sel">&lt;image-set-option&gt;</span><span class="c-pun">#</span> <span class="c-pun">)</span>
+<span class="c-sel">&lt;image-set-option&gt;</span> = <span class="c-pun">[</span> <span class="c-prop">&lt;image&gt;</span> <span class="c-pun">|</span> <span class="c-str">&lt;string&gt;</span> <span class="c-pun">]</span>  <span class="c-pun">[</span> <span class="c-num">&lt;resolution&gt;</span> <span class="c-pun">||</span> <span class="c-fn">type</span><span class="c-pun">(</span><span class="c-str">&lt;string&gt;</span><span class="c-pun">)</span> <span class="c-pun">]?</span></pre>
+        <pre class="code" data-label="Example" style="margin-top:12px"><span class="c-prop">background-image</span>: <span class="c-fn">image-set</span>(
+  <span class="c-fn">url</span>(<span class="c-str">"logo.avif"</span>)   <span class="c-num">1x</span> <span class="c-fn">type</span>(<span class="c-str">"image/avif"</span>),
+  <span class="c-fn">url</span>(<span class="c-str">"logo@2x.png"</span>) <span class="c-num">2x</span> <span class="c-fn">type</span>(<span class="c-str">"image/png"</span>),
+  <span class="c-fn">url</span>(<span class="c-str">"logo.png"</span>)    <span class="c-num">1x</span> <span class="c-fn">type</span>(<span class="c-str">"image/png"</span>)
+);</pre>
+        <div class="grid-3" style="margin-top:16px">
+          <div class="card"><h3><span class="icon" style="font-size:14px">img</span>&lt;image&gt; | &lt;string&gt;</h3><p>A <code class="inline">url()</code>, a plain URL string, or even a <b style="color:var(--text)">gradient</b>. Any image except a nested image-set.</p></div>
+          <div class="card"><h3><span class="icon" style="font-size:14px">2x</span>&lt;resolution&gt;</h3><p>Optional density descriptor — <code class="inline">x</code>, <code class="inline">dppx</code>, <code class="inline">dpi</code>, <code class="inline">dpcm</code>. Defaults to <code class="inline">1x</code>.</p></div>
+          <div class="card"><h3><span class="icon" style="font-size:13px">()</span>type()</h3><p>Optional MIME type. Unsupported types are <b style="color:var(--text)">skipped</b>, enabling format fallback.</p></div>
+        </div>
+      </section>
+
+      <!-- 5. Units -->
+      <section class="slide">
+        <div class="eyebrow">Resolution units</div>
+        <h2>Describing <span class="gold">pixel density</span></h2>
+        <div class="split">
+          <div class="card" style="padding:10px 8px">
+            <table class="t">
+              <tr><th>Unit</th><th>Meaning</th><th>Equivalent</th></tr>
+              <tr><td>x</td><td>Alias of dppx — most common</td><td>2x = 2dppx</td></tr>
+              <tr><td>dppx</td><td>Dots per CSS pixel</td><td>1dppx = 96dpi</td></tr>
+              <tr><td>dpi</td><td>Dots per inch</td><td>192dpi = 2x</td></tr>
+              <tr><td>dpcm</td><td>Dots per centimetre</td><td>≈ 37.8dpcm = 1x</td></tr>
+            </table>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <pre class="code" data-label="All equivalent" style="font-size:15px"><span class="c-com">/* these are the same */</span>
+<span class="c-str">"hero@2x.png"</span> <span class="c-num">2x</span>
+<span class="c-str">"hero@2x.png"</span> <span class="c-num">2dppx</span>
+<span class="c-str">"hero@2x.png"</span> <span class="c-num">192dpi</span></pre>
+            <div class="callout">Your device right now: <b id="dprVal">—</b><br>That's the value the browser compares against.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Example: resolution -->
+      <section class="slide">
+        <div class="eyebrow">Example 01 · Resolution switching</div>
+        <h2>Sharp on every <span class="gold">display</span></h2>
+        <div class="split">
+          <pre class="code" data-label="CSS"><span class="c-sel">.hero</span> <span class="c-pun">{</span>
+  <span class="c-com">/* fallback for old browsers */</span>
+  <span class="c-prop">background-image</span>: <span class="c-fn">url</span>(<span class="c-str">"hero.jpg"</span>);
+
+  <span class="c-prop">background-image</span>: <span class="c-fn">image-set</span>(
+    <span class="c-str">"hero.jpg"</span>    <span class="c-num">1x</span>,
+    <span class="c-str">"hero@2x.jpg"</span> <span class="c-num">2x</span>,
+    <span class="c-str">"hero@3x.jpg"</span> <span class="c-num">3x</span>
+  );
+<span class="c-pun">}</span></pre>
+          <div class="demo">
+            <div class="demo-head">Live demo</div>
+            <div class="demo-box" id="demoRes"></div>
+            <div class="demo-foot">The image shown above is the one <b>your screen</b> selected.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. Example: type -->
+      <section class="slide">
+        <div class="eyebrow">Example 02 · Format selection</div>
+        <h2>Modern formats with <span class="gold">type()</span></h2>
+        <div class="split">
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <pre class="code" data-label="CSS"><span class="c-sel">.banner</span> <span class="c-pun">{</span>
+  <span class="c-prop">background-image</span>: <span class="c-fn">image-set</span>(
+    <span class="c-str">"banner.avif"</span> <span class="c-fn">type</span>(<span class="c-str">"image/avif"</span>),
+    <span class="c-str">"banner.webp"</span> <span class="c-fn">type</span>(<span class="c-str">"image/webp"</span>),
+    <span class="c-str">"banner.jpg"</span>  <span class="c-fn">type</span>(<span class="c-str">"image/jpeg"</span>)
+  );
+<span class="c-pun">}</span></pre>
+            <div class="callout">The browser takes the <b>first option whose type it supports</b> — so list the smallest / most modern format first.</div>
+          </div>
+          <div class="demo">
+            <div class="demo-head">Live demo</div>
+            <div class="demo-box" id="demoType"></div>
+            <div class="demo-foot">Option 1 uses fake type <b>image/x-future</b> → skipped. Option 2 (<b>image/png</b>) is chosen.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 8. Example: combined -->
+      <section class="slide">
+        <div class="eyebrow">Example 03 · Combined</div>
+        <h2>Resolution <span class="gold">+</span> format together</h2>
+        <div class="split">
+          <pre class="code" data-label="CSS"><span class="c-sel">.card-cover</span> <span class="c-pun">{</span>
+  <span class="c-prop">background-image</span>: <span class="c-fn">image-set</span>(
+    <span class="c-str">"cover.avif"</span>    <span class="c-num">1x</span> <span class="c-fn">type</span>(<span class="c-str">"image/avif"</span>),
+    <span class="c-str">"cover@2x.avif"</span> <span class="c-num">2x</span> <span class="c-fn">type</span>(<span class="c-str">"image/avif"</span>),
+    <span class="c-str">"cover.jpg"</span>     <span class="c-num">1x</span> <span class="c-fn">type</span>(<span class="c-str">"image/jpeg"</span>),
+    <span class="c-str">"cover@2x.jpg"</span>  <span class="c-num">2x</span> <span class="c-fn">type</span>(<span class="c-str">"image/jpeg"</span>)
+  );
+  <span class="c-prop">background-size</span>: <span class="c-num">cover</span>;
+<span class="c-pun">}</span></pre>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="card"><h3><span class="icon">1</span>Filter by type</h3><p>Options with unsupported <code class="inline">type()</code> are discarded first.</p></div>
+            <div class="card"><h3><span class="icon">2</span>Match resolution</h3><p>From what remains, the browser picks the density that best fits the screen.</p></div>
+            <div class="card"><h3><span class="icon">3</span>Order matters</h3><p>Resolution &amp; <code class="inline">type()</code> can appear in either order within one option.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 9. Example: gradients -->
+      <section class="slide">
+        <div class="eyebrow">Example 04 · Gradients</div>
+        <h2>Not just URLs — <span class="gold">any image</span></h2>
+        <div class="split">
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <pre class="code" data-label="CSS"><span class="c-sel">.box</span> <span class="c-pun">{</span>
+  <span class="c-prop">background-image</span>: <span class="c-fn">image-set</span>(
+    <span class="c-fn">linear-gradient</span>(<span class="c-num">135deg</span>, <span class="c-str">#7c6cff</span>, <span class="c-str">#3dd6c6</span>) <span class="c-num">1x</span>,
+    <span class="c-fn">linear-gradient</span>(<span class="c-num">135deg</span>, <span class="c-str">#d4a64a</span>, <span class="c-str">#ff7a9c</span>) <span class="c-num">2x</span>
+  );
+<span class="c-pun">}</span></pre>
+            <div class="callout">Any <code class="inline">&lt;image&gt;</code> works — including <b>gradients</b>. Handy for tuning visual effects per screen density.</div>
+          </div>
+          <div class="demo">
+            <div class="demo-head">Live demo</div>
+            <div class="demo-box" id="demoGrad" style="display:grid;place-items:center">
+              <span id="gradLabel" style="font:700 22px 'JetBrains Mono';background:rgba(0,0,0,.35);padding:12px 18px;border-radius:12px"></span>
+            </div>
+            <div class="demo-foot"><b>Violet → teal</b> = 1x screen · <b>Gold → rose</b> = 2x screen</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 10. Fallbacks -->
+      <section class="slide">
+        <div class="eyebrow">Compatibility</div>
+        <h2>Fallbacks &amp; the <span class="gold">-webkit-</span> prefix</h2>
+        <div class="grid-2" style="flex:1">
+          <pre class="code" data-label="Robust pattern"><span class="c-sel">.logo</span> <span class="c-pun">{</span>
+  <span class="c-com">/* 1 — every browser */</span>
+  <span class="c-prop">background-image</span>: <span class="c-fn">url</span>(<span class="c-str">"logo.png"</span>);
+
+  <span class="c-com">/* 2 — older Safari / Chromium */</span>
+  <span class="c-prop">background-image</span>: <span class="c-fn">-webkit-image-set</span>(
+    <span class="c-fn">url</span>(<span class="c-str">"logo.png"</span>) <span class="c-num">1x</span>,
+    <span class="c-fn">url</span>(<span class="c-str">"logo@2x.png"</span>) <span class="c-num">2x</span>
+  );
+
+  <span class="c-com">/* 3 — standard syntax */</span>
+  <span class="c-prop">background-image</span>: <span class="c-fn">image-set</span>(
+    <span class="c-str">"logo.png"</span> <span class="c-num">1x</span>,
+    <span class="c-str">"logo@2x.png"</span> <span class="c-num">2x</span>
+  );
+<span class="c-pun">}</span></pre>
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <div class="card"><h3><span class="icon">↓</span>Cascade fallback</h3><p>If a browser doesn't understand a declaration it ignores it — the last value it <i>does</i> understand wins.</p></div>
+            <div class="card"><h3><span class="icon">⚙</span>Prefixed version</h3><p><code class="inline">-webkit-image-set()</code> is the legacy form; older engines may require <code class="inline">url()</code> and support only <code class="inline">x</code> units.</p></div>
+            <div class="card"><h3><span class="icon">✓</span>Or use @supports</h3><p><code class="inline">@supports (background-image: image-set("a.png" 1x))</code> to feature-detect.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 11. vs srcset -->
+      <section class="slide">
+        <div class="eyebrow">Comparison</div>
+        <h2><span class="gold">image-set()</span> vs <span class="gold">srcset</span> / &lt;picture&gt;</h2>
+        <div class="card" style="padding:12px 10px">
+          <table class="t">
+            <tr><th>Feature</th><th>CSS image-set()</th><th>HTML srcset / &lt;picture&gt;</th></tr>
+            <tr><td>Where</td><td>Stylesheets (backgrounds, decorative)</td><td>Markup (content images)</td></tr>
+            <tr><td>Density switching</td><td>✓ via 1x / 2x / dpi</td><td>✓ via 1x / 2x descriptors</td></tr>
+            <tr><td>Format switching</td><td>✓ via type()</td><td>✓ via &lt;source type&gt;</td></tr>
+            <tr><td>Width-based (w)</td><td>✕ not supported</td><td>✓ srcset + sizes</td></tr>
+            <tr><td>Alt text</td><td>✕ none</td><td>✓ alt attribute</td></tr>
+          </table>
+        </div>
+        <p class="note">Rule of thumb: <b style="color:var(--gold-1)">meaningful</b> images → HTML. <b style="color:var(--gold-1)">Decorative</b> images → CSS image-set().</p>
+      </section>
+
+      <!-- 12. Support & a11y -->
+      <section class="slide">
+        <div class="eyebrow">Support &amp; Accessibility</div>
+        <h2>Ready for <span class="gold">production</span></h2>
+        <div class="grid-4">
+          <div class="card" style="text-align:center"><div style="font-size:34px;margin-bottom:8px">🟢</div><h3 style="justify-content:center">Chrome</h3><p>113+</p></div>
+          <div class="card" style="text-align:center"><div style="font-size:34px;margin-bottom:8px">🔵</div><h3 style="justify-content:center">Edge</h3><p>113+</p></div>
+          <div class="card" style="text-align:center"><div style="font-size:34px;margin-bottom:8px">🟠</div><h3 style="justify-content:center">Firefox</h3><p>88+</p></div>
+          <div class="card" style="text-align:center"><div style="font-size:34px;margin-bottom:8px">⚪</div><h3 style="justify-content:center">Safari</h3><p>17+</p></div>
+        </div>
+        <div class="grid-2" style="margin-top:24px">
+          <div class="callout"><b>Baseline 2023</b> — the unprefixed function works across all modern browsers. Prefixed <code class="inline">-webkit-image-set()</code> has been around far longer.</div>
+          <div class="callout" style="border-color:var(--rose);background:rgba(255,122,156,.06)"><b style="color:var(--rose)">Accessibility:</b> screen readers get no information about CSS background images. Never put important content only in an image-set() background.</div>
+        </div>
+      </section>
+
+      <!-- 13. Best practices -->
+      <section class="slide">
+        <div class="eyebrow">Takeaways</div>
+        <h2>Best <span class="gold">practices</span></h2>
+        <div class="grid-2">
+          <ul class="ticks">
+            <li>Always declare a plain <code class="inline">url()</code> <b>fallback</b> first</li>
+            <li>List <b>modern formats first</b> when using <code class="inline">type()</code></li>
+            <li>Keep <b>1x and 2x</b> — 3x rarely gives visible gains</li>
+            <li>Pair with <code class="inline">background-size</code> so every density renders at the same size</li>
+          </ul>
+          <ul class="ticks">
+            <li>Use for <b>decorative</b> images only</li>
+            <li>Use HTML <code class="inline">srcset</code> for width-based choices</li>
+            <li>Name files clearly: <code class="inline">img@2x.avif</code></li>
+            <li>Check DevTools → Network to confirm the <b>right file</b> loads</li>
+          </ul>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<div class="brand">CSS · image-set()</div>
+<div class="dots" id="dots"></div>
+<div class="nav">
+  <button id="prev" aria-label="Previous slide">←</button>
+  <div class="counter" id="counter"></div>
+  <button id="next" aria-label="Next slide">→</button>
+  <button id="fs" aria-label="Fullscreen" title="Fullscreen (F)">⤢</button>
+</div>
+
+<script>
+  // ---------- Live demo images (SVG data URIs, so the deck is fully self-contained) ----------
+  function svgTile(label, sub, c1, c2) {
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='400' viewBox='0 0 600 400'>
+      <defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='${c1}'/><stop offset='1' stop-color='${c2}'/></linearGradient></defs>
+      <rect width='600' height='400' fill='url(#g)'/>
+      <circle cx='480' cy='80' r='140' fill='white' fill-opacity='.08'/>
+      <circle cx='90' cy='360' r='120' fill='black' fill-opacity='.12'/>
+      <text x='300' y='215' font-family='Inter,Arial' font-size='120' font-weight='800' fill='white' text-anchor='middle'>${label}</text>
+      <text x='300' y='280' font-family='Inter,Arial' font-size='26' fill='white' fill-opacity='.85' text-anchor='middle'>${sub}</text>
+    </svg>`;
+    return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+  }
+
+  const res = document.getElementById('demoRes');
+  const r1 = svgTile('1x', 'Standard display', '#4b3cc9', '#3dd6c6');
+  const r2 = svgTile('2x', 'High-DPI / Retina', '#a8781f', '#ff7a9c');
+  const r3 = svgTile('3x', 'Ultra-dense mobile', '#136e66', '#7c6cff');
+  res.style.backgroundImage = r1;
+  res.style.backgroundImage = `image-set(${r1} 1x, ${r2} 2x, ${r3} 3x)`;
+
+  const typ = document.getElementById('demoType');
+  const t1 = svgTile('FUTURE', 'image/x-future', '#333', '#666');
+  const t2 = svgTile('PNG', 'image/png was chosen', '#4b3cc9', '#d4a64a');
+  typ.style.backgroundImage = t2;
+  // type() only recognises raster formats (svg+xml is ignored), so rasterise the tile to a real PNG
+  const t2Img = new Image();
+  t2Img.onload = () => {
+    const cv = document.createElement('canvas');
+    cv.width = 600; cv.height = 400;
+    cv.getContext('2d').drawImage(t2Img, 0, 0);
+    const png = `url("${cv.toDataURL('image/png')}")`;
+    typ.style.backgroundImage = `image-set(${t1} type("image/x-future"), ${png} type("image/png"))`;
+  };
+  t2Img.src = t2.slice(5, -2);
+
+  const grad = document.getElementById('demoGrad');
+  grad.style.backgroundImage = 'linear-gradient(135deg,#7c6cff,#3dd6c6)';
+  grad.style.backgroundImage = 'image-set(linear-gradient(135deg,#7c6cff,#3dd6c6) 1x, linear-gradient(135deg,#d4a64a,#ff7a9c) 2x)';
+
+  const dpr = window.devicePixelRatio || 1;
+  document.getElementById('dprVal').textContent = `${+dpr.toFixed(2)}x  (${Math.round(dpr * 96)}dpi)`;
+  document.getElementById('gradLabel').textContent = `Your DPR: ${+dpr.toFixed(2)}x`;
+
+  // ---------- Slide engine ----------
+  const track = document.getElementById('track');
+  const slides = [...track.children];
+  const dots = document.getElementById('dots');
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  let i = 0;
+
+  slides.forEach((_, n) => {
+    const d = document.createElement('i');
+    d.onclick = () => go(n);
+    dots.appendChild(d);
+  });
+
+  function go(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    track.style.transform = `translateX(${-i * 1280}px)`;
+    slides.forEach((s, k) => s.classList.toggle('active', k === i));
+    [...dots.children].forEach((d, k) => d.classList.toggle('on', k === i));
+    counter.innerHTML = `<b>${String(i + 1).padStart(2, '0')}</b> / ${String(slides.length).padStart(2, '0')}`;
+    progress.style.width = `${((i + 1) / slides.length) * 100}%`;
+    history.replaceState(null, '', '#' + (i + 1));
+  }
+
+  function fit() {
+    const s = Math.min(innerWidth / 1280, innerHeight / 720);
+    document.getElementById('stage').style.transform = `scale(${s})`;
+  }
+
+  document.getElementById('prev').onclick = () => go(i - 1);
+  document.getElementById('next').onclick = () => go(i + 1);
+  document.getElementById('fs').onclick = toggleFs;
+  function toggleFs() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+    else document.exitFullscreen?.();
+  }
+
+  addEventListener('keydown', e => {
+    if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); go(i + 1); }
+    if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); go(i - 1); }
+    if (e.key === 'Home') go(0);
+    if (e.key === 'End') go(slides.length - 1);
+    if (e.key.toLowerCase() === 'f') toggleFs();
+  });
+
+  let x0 = null;
+  addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+  addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 50) go(i + (dx < 0 ? 1 : -1));
+    x0 = null;
+  });
+
+  addEventListener('resize', fit);
+  fit();
+  go((parseInt(location.hash.slice(1)) || 1) - 1);
+</script>
+</body>
+</html>
